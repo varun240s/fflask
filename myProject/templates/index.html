@@ -85,62 +85,46 @@
     
     <div class="container">
         <h1>Add a Todo</h1>
-      <form>
-        <div class="mb-3">
-          <label for="title" class="form-label">Title</label>
-          <input type="text" class="form-control" id="title" aria-describedby="emailHelp"/>
-          <div id="emailHelp" class="form-text">
+        <form action="/add" method="post">
+          <div class="mb-3">
+            <label for="title" class="form-label">Title</label>
+            <input type="text" class="form-control" id="title" name="title" required />
           </div>
-        </div>
-        <div class="mb-3">
-          <label for="desc" class="form-label">Todo description</label>
-          <input
-            type="text"
-            class="form-control"
-            id="desc"
-          />
-        </div>
-        <div class="mb-3 form-check">
-          <input type="checkbox" class="form-check-input" id="exampleCheck1" />
-          <label class="form-check-label" for="exampleCheck1"
-            >Check me out</label
-          >
-        </div>
-        <button type="submit" class="btn btn-primary">Submit</button>
-      </form>
+          <div class="mb-3">
+            <label for="desc" class="form-label">Todo description</label>
+            <input type="text" class="form-control" id="desc" name="desc" required />
+          </div>
+          <button type="submit" class="btn btn-primary">Add Todo</button>
+        </form>
     </div>
 
     <div class="container">
         <h2>Todo List</h2>
-      <table class="table">
-        <thead>
-          <tr>
-            <th scope="col">Sno</th>
-            <th scope="col">First</th>
-            <th scope="col">Last</th>
-            <th scope="col">Handle</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <th scope="row">1</th>
-            <td>Mark</td>
-            <td>Otto</td>
-            <td>@mdo</td>
-          </tr>
-          <tr>
-            <th scope="row">2</th>
-            <td>Jacob</td>
-            <td>Thornton</td>
-            <td>@fat</td>
-          </tr>
-          <tr>
-            <th scope="row">3</th>
-            <td colspan="2">Larry the Bird</td>
-            <td>@twitter</td>
-          </tr>
-        </tbody>
-      </table>
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">ID</th>
+              <th scope="col">Title</th>
+              <th scope="col">Description</th>
+              <th scope="col">Date Created</th>
+              <th scope="col">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for todo in allTodo %}
+            <tr>
+              <th scope="row">{{ todo.sno }}</th>
+              <td>{{ todo.title }}</td>
+              <td>{{ todo.desc }}</td>
+              <td>{{ todo.date_created }}</td>
+              <td>
+                <a href="/update/{{ todo.sno }}" class="btn btn-sm btn-warning">Edit</a>
+                <a href="/delete/{{ todo.sno }}" class="btn btn-sm btn-danger" onclick="return confirm('Delete this todo?');">Delete</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
     </div>
 
     <!-- Optional JavaScript; choose one of the two! -->
