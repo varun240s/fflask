@@ -85,7 +85,7 @@
     
     <div class="container">
         <h1>Add a Todo</h1>
-        <form action="/add" method="post">
+        <form id="addTodoForm">
           <div class="mb-3">
             <label for="title" class="form-label">Title</label>
             <input type="text" class="form-control" id="title" name="title" required />
@@ -96,6 +96,7 @@
           </div>
           <button type="submit" class="btn btn-primary">Add Todo</button>
         </form>
+        <div id="addTodoMsg" class="mt-2"></div>
     </div>
 
     <div class="container">
@@ -110,36 +111,86 @@
               <th scope="col">Actions</th>
             </tr>
           </thead>
-          <tbody>
-            {% for todo in allTodo %}
-            <tr>
-              <th scope="row">{{ todo.sno }}</th>
-              <td>{{ todo.title }}</td>
-              <td>{{ todo.desc }}</td>
-              <td>{{ todo.date_created }}</td>
-              <td>
-                <a href="/update/{{ todo.sno }}" class="btn btn-sm btn-warning">Edit</a>
-                <a href="/delete/{{ todo.sno }}" class="btn btn-sm btn-danger" onclick="return confirm('Delete this todo?');">Delete</a>
-              </td>
-            </tr>
-            {% endfor %}
+          <tbody id="todoTableBody">
+            <!-- Todos will be rendered here by JS -->
           </tbody>
         </table>
     </div>
 
-    <!-- Optional JavaScript; choose one of the two! -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+    <script>
+    // Redirect to login if token missing
+    const token = localStorage.getItem('token');
+    if (!token) {
+      window.location.href = '/login-page';
+    }
 
-    <!-- Option 1: Bootstrap Bundle with Popper -->
-    <script
-      src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
-      integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
-      crossorigin="anonymous"
-    ></script>
+    // Fetch and render todos
+    async function loadTodos() {
+      const res = await fetch('/api/todos', {
+        headers: {
+          'Authorization': 'Bearer ' + token
+        }
+      });
+      if (res.ok) {
+        const todos = await res.json();
+        const tbody = document.getElementById('todoTableBody');
+        tbody.innerHTML = '';
+        todos.forEach(todo => {
+          tbody.innerHTML += `<tr>
+            <th scope="row">${todo.sno}</th>
+            <td>${todo.title}</td>
+            <td>${todo.desc}</td>
+            <td>${todo.date_created}</td>
+            <td>
+              <a href="/update/${todo.sno}" class="btn btn-sm btn-warning">Edit</a>
+              <button class="btn btn-sm btn-danger" onclick="deleteTodo(${todo.sno})">Delete</button>
+            </td>
+          </tr>`;
+        });
+      } else {
+        document.getElementById('todoTableBody').innerHTML = '<tr><td colspan="5" class="text-danger">Failed to load todos.</td></tr>';
+      }
+    }
+    loadTodos();
 
-    <!-- Option 2: Separate Popper and Bootstrap JS -->
-    <!--
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js" integrity="sha384-IQsoLXl5PILFhosVNubq5LC7Qb9DXgDA9i+tQ8Zj3iwWAwPtgFTxbJ8NT4GN1R8p" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.min.js" integrity="sha384-cVKIPhGWiC2Al4u+LWgxfKTRIcfu0JTxR+EQDz/bgldoEyl4H0zUF0QKbrJ0EcQF" crossorigin="anonymous"></script>
-    -->
+    // Delete Todo function
+    window.deleteTodo = async function(sno) {
+      if (!confirm('Delete this todo?')) return;
+      const res = await fetch(`/delete/${sno}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': 'Bearer ' + token
+        }
+      });
+      if (res.ok) {
+        loadTodos();
+      } else {
+        alert('Failed to delete todo.');
+      }
+    }
+
+    // Add Todo form submit
+    document.getElementById('addTodoForm').onsubmit = async function(e) {
+      e.preventDefault();
+      const title = document.getElementById('title').value;
+      const desc = document.getElementById('desc').value;
+      const res = await fetch('/add', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: new URLSearchParams({title, desc})
+      });
+      const msgBox = document.getElementById('addTodoMsg');
+      if (res.ok) {
+        msgBox.innerHTML = '<span class="text-success">Todo added! Refreshing...';
+        setTimeout(() => loadTodos(), 1000);
+      } else {
+        msgBox.innerHTML = '<span class="text-danger">Failed to add todo.</span>';
+      }
+    };
+    </script>
   </body>
 </html>
